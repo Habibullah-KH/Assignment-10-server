@@ -31,12 +31,35 @@ async function run() {
         
 //?----user equepment sencion start
 
-//***  Send created equepment data to clint site
+//***  Send created full web equepment data to clint site
         app.post('/equipment', async(req, res)=>{
           const newequipment = req.body;
           const result = await database.insertOne(newequipment);
           res.send(result);
         })
+
+//**** send data based on user if user not then user data not
+
+app.get('/equipment', async (req, res) => {
+  try {
+      const userEmail = req.query.user || null;
+
+      let query = {};
+      if (userEmail) {
+
+          query = { $or: [{ email: userEmail }, { email: { $exists: false } }] };
+      } else {
+          query = { email: { $exists: false } };
+      }
+
+      const result = await database.find(query).toArray();
+      res.send(result);
+  } catch (error) {
+      console.error('Error fetching equipment:', error);
+      res.status(500).send({ error: 'Failed to fetch equipment' });
+  }
+});
+
 
 //***  get user equepment data to clint site
         app.get('/equipment/:user', async(req, res)=>{
@@ -79,24 +102,34 @@ async function run() {
         })
 
         //* filter data and set it to adtional
-        app.get('/category/:category', async (req, res) => {
-    const category = req.params.category;
-    console.log(category);
-    let query = {};
-    if (category !== "All") {
-        query = { categoryName: category };
-    }
-    try {
-        const result = await database.find(query).toArray(); // Convert cursor to array
-        console.log(result);
-        res.send(result);
-    } catch (error) {
-        console.error("Error fetching data:", error);
-        res.status(500).send({ error: "Failed to fetch data from the database" });
-    }
-});
-
+        app.get('/category', async (req, res) => {
+          const { category, user } = req.query;
+          let query = {};
+          if (user) {
+            
+            query = { $or: [{ email: user }, { email: { $exists: false } }] };
+          } else {
+            query = { email: { $exists: false } };
+          }
+          
+              if (category && category !== "All") {
+                  query.categoryName = category;
+              }
+          
       
+          try {
+              const result = await database.find(query).toArray();
+              console.log(result);
+              res.send(result);
+          } catch (error) {
+              console.error("Error fetching data:", error);
+              res.status(500).send({ error: "Failed to fetch data from the database" });
+          }
+      });
+      
+      
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
