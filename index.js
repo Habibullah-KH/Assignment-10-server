@@ -24,7 +24,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
         // Connect to the "insertDB" database and access its "haiku" collection
         const database = client.db('UserDataDB').collection('userData');
@@ -38,9 +38,92 @@ async function run() {
           res.send(result);
         })
 
+
+        app.get('/update/:id', async(req, res)=>{
+          try {
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: new ObjectId(id) };
+            const result = await database.findOne(query);
+            res.send(result);
+          }
+          catch (error) {
+            console.error('Error fetching products:', error);
+          }
+        })
+
+        //?  update web equepment data to clint site
+      app.put('/update/:id', async(req, res)=>{
+        try{
+          const id = req.params.id;
+          const query = { _id: new ObjectId(id) };
+          const options = {upsert:true}
+          const updatedEquepment = req.body;
+          const updated = {
+
+            $set:{
+              email:updatedEquepment.email,
+               name:updatedEquepment.name,
+               itemName:updatedEquepment.itemName,
+               image:updatedEquepment.image,
+               description:updatedEquepment.description,
+               price:updatedEquepment.price,
+               categoryName:updatedEquepment.categoryName,
+               rating:updatedEquepment.rating,
+               processingTime:updatedEquepment.processingTime,
+               stockStatus:updatedEquepment.stockStatus,
+               customization:updatedEquepment.customization
+
+            }
+          }
+          const result = await database.updateOne(query, updated, options)
+          res.send(result);
+        }
+        catch(error) {
+          console.error('Error fetching products:', error);
+        }
+      })
+
 //**** send data based on user if user not then user data not
 
 app.get('/equipment', async (req, res) => {
+    try {
+        const userEmail = req.query.user || null;
+
+        let query = {};
+        if (userEmail) {
+            query = { $or: [{ email: userEmail }, { email: { $exists: false } }] };
+        } else {
+            query = { email: { $exists: false } };
+        }
+
+        const result = await database.find(query).sort({ _id: -1 }).limit(6).toArray();
+        res.send(result);
+    } catch (error) {
+        console.error('Error fetching equipment:', error);
+        res.status(500).send({ error: 'Failed to fetch equipment' });
+    }
+});
+
+
+
+//***  get user equepment data to clint site
+        app.get('/equipment/:user', async(req, res)=>{
+          try{
+            const user = req.params.user;
+            const query = { email: user };
+            const result = await database.find(query).toArray();
+            console.log(result);
+            res.send(result);
+          }
+          catch (error) {
+            console.error('Error fetching products:', error);
+          }
+        })
+
+
+//***  sent user allequepment data to clint site
+app.get('/allequipment', async (req, res) => {
   try {
       const userEmail = req.query.user || null;
 
@@ -61,23 +144,7 @@ app.get('/equipment', async (req, res) => {
 });
 
 
-//***  get user equepment data to clint site
-        app.get('/equipment/:user', async(req, res)=>{
-          try{
-            const user = req.params.user;
-            const query = { email: user };
-            const result = await database.find(query).toArray();
-            console.log(result);
-            res.send(result);
-          }
-          catch (error) {
-            console.error('Error fetching products:', error);
-          }
-        })
-
-
-//!!----user equepment sencion end
-
+        
         //* Get bulck stock data from data base
         app.get('/myprodouct', async(req, res)=>{
           try {
@@ -101,6 +168,20 @@ app.get('/equipment', async (req, res) => {
 
         })
 
+        //!delete data
+        app.delete('/users/:id', async (req, res) => {
+          const id = req.params.id;
+          const query = { _id: new ObjectId(id) };
+          try {
+              const result = await database.deleteOne(query);
+              res.send(result);
+          } catch (error) {
+              console.error("Error deleting item:", error);
+              res.status(500).send({ error: "Failed to delete the item." });
+          }
+      });
+      
+        
         //* filter data and set it to adtional
         app.get('/category', async (req, res) => {
           const { category, user } = req.query;
@@ -117,18 +198,20 @@ app.get('/equipment', async (req, res) => {
               }
           
       
-          try {
-              const result = await database.find(query).toArray();
+              try {
+                const result = await database.find(query).toArray();
               console.log(result);
               res.send(result);
           } catch (error) {
               console.error("Error fetching data:", error);
               res.status(500).send({ error: "Failed to fetch data from the database" });
-          }
-      });
-      
+            }
+          });
+          
       
 
+          
+          //!!----user equepment sencion end
 
 
     // Send a ping to confirm a successful connection
