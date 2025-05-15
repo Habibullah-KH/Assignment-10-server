@@ -8,7 +8,7 @@ const port = process.env.PORT || 5000;
 //*middleware
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'ph-10-as-54712.web.app', 'ph-10-as-54712.firebaseapp.com'],
+  origin: ['http://localhost:5173', 'https://ph-10-as-54712.web.app', 'https://ph-10-as-54712.firebaseapp.com'],
   credentials: true
 
 }));
@@ -186,36 +186,37 @@ app.get('/allequipment', async (req, res) => {
       });
       
         
-        //* filter data and set it to adtional
-        app.get('/category', async (req, res) => {
-          const { category, user } = req.query;
-          let query = {};
-          if (user) {
-            
-            query = { $or: [{ email: user }, { email: { $exists: false } }] };
-          } else {
-            query = { email: { $exists: false } };
-          }
-          
-              if (category && category !== "All") {
-                  query.categoryName = category;
-              }
-          
-      
-              try {
-                const result = await database.find(query).toArray();
-              res.send(result);
-          } catch (error) {
-              console.error("Error fetching data:", error);
-              res.status(500).send({ error: "Failed to fetch data from the database" });
-            }
-          });
-          
-      
+//* filter data and set it to additional
+app.get('/category', async (req, res) => {
+  const { category, user } = req.query;
+  let query = {};
+
+  if (user) {
+    query = { $or: [{ email: user }, { email: { $exists: false } }] };
+  } else {
+    query = { email: { $exists: false } };
+  }
+
+  if (category && category !== "All") {
+    query.categoryName = category;
+  }
+
+  try {
+    const result = await database.find(query).toArray();
+    res.send(result);
+  } catch (error) {
+    console.error("🔥 ERROR while fetching data:", error);
+    res.status(500).send({
+      error: "Failed to fetch data from the database",
+      message: error.message,
+      stack: error.stack,
+    });
+  } 
+});
+
 
           
           //!!----user equepment sencion end
-
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
