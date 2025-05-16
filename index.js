@@ -1,237 +1,143 @@
-require ('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 5000;
 
-//*middleware
-
+// middlewares
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://ph-10-as-54712.web.app', 'https://ph-10-as-54712.firebaseapp.com'],
-  credentials: true
-
+  origin: [
+    'http://localhost:5173',
+    'https://online-tutor-booking.web.app',
+    'https://online-tutor-booking.firebaseapp.com',
+  ],
+  credentials: true,
 }));
 app.use(express.json());
 
-
-const uri = `mongodb+srv://${process.env.DB_user}:${process.env.DB_password}@cluster0.utrln.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const uri = `mongodb+srv://${process.env.DB_user}:${process.env.DB_password}@cluster0.utrln.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
+// -------- FIXED & WORKING run function
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
+    const db = client.db('PH_10_AS_server');
+    const tutorialCollection = db.collection('tutorials');
+    const userDataCollection = db.collection('userBookedData');
 
-        // Connect to the "insertDB" database and access its "haiku" collection
-        const database = client.db('UserDataDB').collection('userData');
-        
-//?----user equepment sencion start
-
-//***  Send created full web equepment data to clint site
-        app.post('/equipment', async(req, res)=>{
-          const newequipment = req.body;
-          const result = await database.insertOne(newequipment);
-          res.send(result);
-        })
-
-
-        app.get('/update/:id', async(req, res)=>{
-          try {
-            const id = req.params.id;
-            console.log(id);
-            const query = { _id: new ObjectId(id) };
-            const result = await database.findOne(query);
-            res.send(result);
-          }
-          catch (error) {
-            console.error('Error fetching products:', error);
-          }
-        })
-
-        //?  update web equepment data to clint site
-      app.put('/update/:id', async(req, res)=>{
-        try{
-          const id = req.params.id;
-          const query = { _id: new ObjectId(id) };
-          const options = {upsert:true}
-          const updatedEquepment = req.body;
-          const updated = {
-
-            $set:{
-              email:updatedEquepment.email,
-               name:updatedEquepment.name,
-               itemName:updatedEquepment.itemName,
-               image:updatedEquepment.image,
-               description:updatedEquepment.description,
-               price:updatedEquepment.price,
-               categoryName:updatedEquepment.categoryName,
-               rating:updatedEquepment.rating,
-               processingTime:updatedEquepment.processingTime,
-               stockStatus:updatedEquepment.stockStatus,
-               customization:updatedEquepment.customization
-
-            }
-          }
-          const result = await database.updateOne(query, updated, options)
-          res.send(result);
-        }
-        catch(error) {
-          console.error('Error fetching products:', error);
-        }
-      })
-
-//**** send data based on user if user not then user data not
-
-app.get('/equipment', async (req, res) => {
-    try {
-        const userEmail = req.query.user || null;
-
-        let query = {};
-        if (userEmail) {
-            query = { $or: [{ email: userEmail }, { email: { $exists: false } }] };
-        } else {
-            query = { email: { $exists: false } };
-        }
-
-        const result = await database.find(query).sort({ _id: -1 }).limit(6).toArray();
-        res.send(result);
-    } catch (error) {
-        console.error('Error fetching equipment:', error);
-        res.status(500).send({ error: 'Failed to fetch equipment' });
-    }
-});
-
-
-
-//***  get user equepment data to clint site
-        app.get('/equipment/:user', async(req, res)=>{
-          try{
-            const user = req.params.user;
-            const query = { email: user };
-            const result = await database.find(query).toArray();
-            console.log(result);
-            res.send(result);
-          }
-          catch (error) {
-            console.error('Error fetching products:', error);
-          }
-        })
-
-
-//***  sent user allequepment data to clint site
-app.get('/allequipment', async (req, res) => {
-  try {
-      const userEmail = req.query.user || null;
-
-      let query = {};
-      if (userEmail) {
-
-          query = { $or: [{ email: userEmail }, { email: { $exists: false } }] };
-      } else {
-          query = { email: { $exists: false } };
-      }
-
-      const result = await database.find(query).toArray();
-      res.send(result);
-  } catch (error) {
-      console.error('Error fetching equipment:', error);
-      res.status(500).send({ error: 'Failed to fetch equipment' });
-  }
-});
-
-
-        
-        //* Get bulck stock data from data base
-        app.get('/myprodouct', async(req, res)=>{
-          try {
-            
-            const cursor = database.find().limit(6);
-            const result = await cursor.toArray();
-            res.send(result);
-          } catch (error) {
-            console.error('Error fetching products:', error);
-            res.status(500).send({ error: 'Failed to fetch products' });
-          }
-        })
-
-        //* find a data
-        app.get('/user/:id', async(req, res)=>{
-          const id = req.params.id;
-          const query = {_id: new ObjectId(id)}
-          const result = await database.findOne(query);
-          res.send(result);
-
-        })
-
-        //!delete data
-        app.delete('/users/:id', async (req, res) => {
-          const id = req.params.id;
-          const query = { _id: new ObjectId(id) };
-          try {
-              const result = await database.deleteOne(query);
-              res.send(result);
-          } catch (error) {
-              console.error("Error deleting item:", error);
-              res.status(500).send({ error: "Failed to delete the item." });
-          }
+    // JWT Login
+    app.post('/jwt', (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: '1d',
       });
-      
-        
-//* filter data and set it to additional
-app.get('/category', async (req, res) => {
-  const { category, user } = req.query;
-  let query = {};
-
-  if (user) {
-    query = { $or: [{ email: user }, { email: { $exists: false } }] };
-  } else {
-    query = { email: { $exists: false } };
-  }
-
-  if (category && category !== "All") {
-    query.categoryName = category;
-  }
-
-  try {
-    const result = await database.find(query).toArray();
-    res.send(result);
-  } catch (error) {
-    console.error("🔥 ERROR while fetching data:", error);
-    res.status(500).send({
-      error: "Failed to fetch data from the database",
-      message: error.message,
-      stack: error.stack,
+      res
+        .cookie('token', token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'none',
+        })
+        .send({ success: true });
     });
-  } 
-});
 
+    // JWT Logout
+    app.post('/logout', (req, res) => {
+      res
+        .clearCookie('token', {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'none',
+        })
+        .send({ success: true });
+    });
 
-          
-          //!!----user equepment sencion end
+    // GET all tutorials with optional search
+    app.get('/cards', async (req, res) => {
+      const search = req.query.search || '';
+      const result = await tutorialCollection
+        .find({ language: { $regex: search, $options: 'i' } })
+        .toArray();
+      res.send(result);
+    });
 
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-  } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
+    // GET by language
+    app.get('/find-tutors/:language', async (req, res) => {
+      const language = req.params.language;
+      const result = await tutorialCollection.find({ language }).toArray();
+      res.send(result);
+    });
+
+    // POST new tutorial
+    app.post('/addTutorial', async (req, res) => {
+      const data = req.body;
+      const result = await tutorialCollection.insertOne(data);
+      res.send(result);
+    });
+
+    // Auth middleware
+    const verifyToken = (req, res, next) => {
+      const token = req.cookies.token;
+      if (!token) return res.status(401).send('Unauthorized');
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) return res.status(403).send('Forbidden');
+        req.user = decoded;
+        next();
+      });
+    };
+
+    // GET user's tutorials
+    app.get('/mytutorial/:email', verifyToken, async (req, res) => {
+      if (req.user.email !== req.params.email) {
+        return res.status(403).send('Forbidden');
+      }
+      const result = await tutorialCollection
+        .find({ email: req.params.email })
+        .toArray();
+      res.send(result);
+    });
+
+    // PUT tutorial update
+    app.put('/UpdateMyTutorial/:id', async (req, res) => {
+      const id = req.params.id;
+      const updateData = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const update = { $set: updateData };
+      const result = await tutorialCollection.updateOne(filter, update);
+      res.send(result);
+    });
+
+    // DELETE tutorial
+    app.delete('/delete/:id', async (req, res) => {
+      const id = req.params.id;
+      const result = await tutorialCollection.deleteOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
+
+    // ✅ This ping route is required by Vercel for health check
+    app.get('/', (req, res) => {
+      res.send('Server is running');
+    });
+
+  } catch (err) {
+    console.error('Server Error:', err);
   }
 }
+
 run().catch(console.dir);
 
+// ✅ Vercel must export the app
+module.exports = app;
 
-app.get('/', (req, res)=>{
-    res.send('surver is running');
-})
-
-app.listen(port, ()=>{
-    console.log('surver is running');
-})
+// Optional if testing locally
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });
+}
