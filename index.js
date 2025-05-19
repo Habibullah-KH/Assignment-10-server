@@ -250,7 +250,7 @@ app.get('/category', async (req, res) => {
           //!!----user equepment sencion end
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
