@@ -33,6 +33,7 @@ async function run() {
 
         // Connect to the "insertDB" database and access its "haiku" collection
         const database = client.db('UserDataDB').collection('userData');
+        const userInfo = client.db('UserDataDB').collection('userInfo');
         
 //?----user equepment sencion start
 
@@ -148,6 +149,36 @@ app.get('/allequipment', async (req, res) => {
   }
 });
 
+// Get profile info
+app.get('/profile/:email', async (req, res) => {
+  try {
+    const email = req.params.email;
+    const profile = await userInfo.findOne({ userEmail: email });
+    res.send(profile || {});
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    res.status(500).send({ error: 'Failed to fetch profile' });
+  }
+});
+
+// Create or update profile info
+app.post('/profile/:email', async (req, res) => {
+  try {
+    const email = req.params.email;
+    const { age, location } = req.body;
+
+    const result = await userInfo.updateOne(
+      { userEmail: email },
+      { $set: { userEmail: email, age, location } },
+      { upsert: true }
+    );
+
+    res.send(result);
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).send({ error: 'Failed to update profile' });
+  }
+});
 
         
         //* Get bulck stock data from data base
