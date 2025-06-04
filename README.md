@@ -1,7 +1,7 @@
-# 🎓 PolyLingua
+#🎖️ ActiveEdge
 
-### 🔸 Project Overview:
-To provide an efficient and interactive solution for hiring tutors, enabling users to enhance their skills in a friendly and accessible environment.
+###Project Overview
+ActiveEdge is an innovative online store dedicated to providing high-quality sports equipment tailored to meet the unique needs of athletes and enthusiasts. The platform focuses on customization, efficiency, and a seamless shopping experience for users looking for top-tier sports gear.
 
 ## 🛠 Server Installation
 
