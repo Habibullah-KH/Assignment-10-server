@@ -1,6 +1,6 @@
-#🎖️ ActiveEdge
+# 🎖️ ActiveEdge
 
-###Project Overview
+### Project Overview
 ActiveEdge is an innovative online store dedicated to providing high-quality sports equipment tailored to meet the unique needs of athletes and enthusiasts. The platform focuses on customization, efficiency, and a seamless shopping experience for users looking for top-tier sports gear.
 
 ## 🛠 Server Installation
